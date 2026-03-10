@@ -1,13 +1,14 @@
 const userModel = require("../models/userModel");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
+const cookie = require("cookie-parser")
 
 const registerController = async(req,res)=>{
     try {
         const {name , email, password} = req.body;
         console.log(name, email, password);
 
-        if(!name , !email, !password){
+        if(!name || !email|| !password){
             return res.status(400).json({message:"Fill All Fields"})
         }
 
@@ -17,7 +18,7 @@ const registerController = async(req,res)=>{
        }
 
 
-        const hashPassword = await bcrypt.hashPassword(password,10);
+        const hashPassword = await bcrypt.hash(password,10);
         
         const user = await userModel.create({
             name,
@@ -35,11 +36,11 @@ const registerController = async(req,res)=>{
     
 }
 
-const loginController = async()=>{
+const loginController = async(req,res)=>{
    try {
     const {email , password} = req.body
 
-    if(!email, !password){
+    if(!email || !password){
             return res.status(400).json({message:"Fill All Fields"})
         }
 
@@ -57,7 +58,10 @@ const loginController = async()=>{
 
         const token = jwt.sign({id:user._id},process.env.JWTSECRET,{expiresIn:"1h"});
 
-        res.status(201).json({message:" User login successfully"})
+        res.cookie("token", token, {
+  httpOnly: true
+});
+        res.status(201).json({message:" User login successfully",token})
    } catch (error) {
     res.status(500).json({message:"error in login"})
    }
